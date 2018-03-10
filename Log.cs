@@ -7,7 +7,7 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 
-namespace Digi
+namespace EEM
 {
     public static class Log // v1.4
     {
@@ -44,7 +44,7 @@ namespace Digi
 
             if(preInitMessages.Count > 0)
             {
-                foreach(var msg in preInitMessages)
+                foreach(string msg in preInitMessages)
                 {
                     Log.Error(msg);
                 }
