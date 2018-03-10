@@ -1,50 +1,49 @@
 ﻿using System;
-using System.Text;
-using Sandbox.ModAPI;
-using VRage.Game.Components;
-using VRage.ModAPI;
-using Sandbox.Common.ObjectBuilders;
-using VRage.ObjectBuilders;
-using Sandbox.Definitions;
-using VRage.Game;
-using Sandbox.Game.EntityComponents;
-using VRage.Game.Entity;
-using Sandbox.Game;
-using VRageMath;
-using SpaceEngineers.Game.ModAPI;
-using VRage.Game.ModAPI;
 using System.Collections.Generic;
-using Sandbox.Game.Entities;
-using Sandbox.ModAPI.Interfaces;
 using System.Linq;
+using System.Timers;
+using EEM.HelperClasses;
+using Sandbox.Common.ObjectBuilders;
+using Sandbox.Game.Entities;
+using Sandbox.ModAPI;
+using VRage.Game;
+using VRage.Game.Components;
+using VRage.Game.Entity;
+using VRage.Game.ModAPI;
+using VRage.ModAPI;
+using VRage.ObjectBuilders;
 
-namespace Cheetah.AI
+namespace EEM
 {
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_RemoteControl), true)]
+    // ReSharper disable once UnusedMember.Global
     public class GridComponent : MyGameLogicComponent
     {
-        private IMyRemoteControl RC;
-        public IMyCubeGrid Grid { get; private set; }
-        private BotBase AI;
+        private IMyRemoteControl _remoteControl;
 
-        private bool IsOperable = false;
-        public bool CanOperate
+        private IMyCubeGrid Grid { get; set; }
+
+        private BotBase _ai;
+
+        private bool _isOperable;
+
+        private bool CanOperate
         {
             get
             {
                 try
                 {
-                    if (AI == null)
+                    if (_ai == null)
                     {
                         //DebugWrite("CanOperate", "AI is null");
                         return false;
                     }
-                    return IsOperable && Grid.InScene && AI.Operable;
+                    return _isOperable && Grid.InScene && _ai.Operable;
                 }
-                catch (Exception Scrap)
+                catch (Exception scrap)
                 {
                     //DebugWrite("CanOperate", $"Grid {(Grid != null ? "!=" : "==")} null; AI {(AI != null ? "!=" : "==")} null");
-                    LogError("CanOperate", Scrap);
+                    LogError("CanOperate", scrap);
                     return false;
                 }
             }
@@ -53,39 +52,43 @@ namespace Cheetah.AI
         /// <summary>
         /// Provides a simple way to recompile all PBs on the grid, with given delay.
         /// </summary>
-        System.Timers.Timer RecompileDelay = new System.Timers.Timer(500);
+        private readonly Timer _recompileDelay = new Timer(500);
         
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
             _builder = objectBuilder;
-            RC = Entity as IMyRemoteControl;
-            Grid = RC.CubeGrid.GetTopMostParent() as IMyCubeGrid;
+            _remoteControl = Entity as IMyRemoteControl;
+            if (_remoteControl == null) return;
+            Grid = _remoteControl.CubeGrid.GetTopMostParent() as IMyCubeGrid;
             //MyAPIGateway.Utilities.ShowMessage($"{Grid.DisplayName}", $"RC component inited");
-            RC.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME | MyEntityUpdateEnum.EACH_10TH_FRAME | MyEntityUpdateEnum.EACH_100TH_FRAME;
+            _remoteControl.NeedsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME | MyEntityUpdateEnum.EACH_10TH_FRAME |
+                              MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
         private void SetupRecompileTimer()
         {
-            RecompileDelay.AutoReset = false;
-            RecompileDelay.Elapsed += (trash1, trash2) =>
+            _recompileDelay.AutoReset = false;
+            _recompileDelay.Elapsed += (trash1, trash2) =>
             {
-                RecompileDelay.Stop();
-                RecompilePBs();
+                _recompileDelay.Stop();
+                //RecompilePBs();
             };
         }
 
+        private static List<IMyProgrammableBlock> ProgrammableBlockCollection { get; set; }
+
         private void RecompilePBs()
         {
-            foreach (IMyProgrammableBlock PB in Grid.GetTerminalSystem().GetBlocksOfType<IMyProgrammableBlock>())
+            foreach (IMyProgrammableBlock programmableBlock in Grid.GetTerminalSystem().GetBlocksOfType<IMyProgrammableBlock>())
             {
-                PB.Recompile();
+                programmableBlock.Recompile();
             }
         }
 
         public override void UpdateOnceBeforeFrame()
         {
-            if (!Inited) InitAI();
+            if (!_inited) InitAi();
         }
 
         // The grid component's updating is governed by AI.Update, and the functions are called as flagged in update.
@@ -93,89 +96,90 @@ namespace Cheetah.AI
         public override void UpdateBeforeSimulation10() { if (CanOperate) Run(); }
         public override void UpdateBeforeSimulation100() { if (CanOperate) Run(); }
 
-        private bool Inited = false;
-        public void InitAI()
+        private bool _inited;
+
+        private void InitAi()
         {
-            if (!AISessionCore.IsServer) return;
+            if (!AiSessionCore.IsServer) return;
             SetupRecompileTimer();
 
             try
             {
-                if (Grid.Physics == null || (Grid as MyEntity).IsPreview) return;
+                if (Grid.Physics == null || ((MyEntity) Grid).IsPreview) return;
             }
-            catch (Exception Scrap)
+            catch (Exception scrap)
             {
-                LogError("InitAI[grid check]", Scrap);
+                LogError("InitAI[grid check]", scrap);
             }
 
             try
             {
-                if (string.IsNullOrWhiteSpace(RC.CustomData) || !RC.CustomData.Contains("[EEM_AI]"))
+                if (string.IsNullOrWhiteSpace(_remoteControl.CustomData) || !_remoteControl.CustomData.Contains("[EEM_AI]"))
                 {
-                    Shutdown(Notify: false);
+                    Shutdown(notify: false);
                     return;
                 }
 
                 //DebugWrite("GridComponent.InitAI", "Booting up RC component.");
 
-                if (!RC.IsOwnedByNPC())
+                if (!_remoteControl.IsOwnedByNPC())
                 {
                     DebugWrite("GridComponent.InitAI", "RC is not owned by NPC!");
-                    Shutdown(Notify: false);
+                    Shutdown(notify: false);
                     return;
                 }
 
-                if (RC.CustomData.Contains("Faction:"))
+                if (_remoteControl.CustomData.Contains("Faction:"))
                 {
                     try
                     {
                         TryAssignToFaction();
                     }
-                    catch(Exception Scrap)
+                    catch(Exception scrap)
                     {
-                        LogError("TryAssignToFaction", Scrap);
+                        LogError("TryAssignToFaction", scrap);
                     }
                 }
 
-                if (RC.CustomData.Contains("Type:None"))
+                if (_remoteControl.CustomData.Contains("Type:None"))
                 {
-                    IsOperable = true;
-                    Inited = true;
+                    _isOperable = true;
+                    _inited = true;
                     DebugWrite("GridComponent.InitAI", "Type:None, shutting down.");
-                    Shutdown(Notify: false);
+                    Shutdown(notify: false);
                     return;
                 }
 
-                BotTypes BotType = BotBase.ReadBotType(RC);
-                if (BotType == BotTypes.None)
+                BotTypes botType = BotTypeHelper.ReadBotType(_remoteControl);
+                if (botType == BotTypes.None)
                 {
                     DebugWrite("GridComponent.InitAI", "Skipping grid — no setup found");
                 }
-                else if (BotType == BotTypes.Invalid)
+                else if (botType == BotTypes.Invalid)
                 {
                     LogError("GridComponent.InitAI", new Exception("Bot type is not valid!", new Exception()));
                 }
 
                 //DebugWrite("GridComponent.InitAI", $"Bot found. Bot type: {BotType.ToString()}");
             }
-            catch (Exception Scrap)
+            catch (Exception scrap)
             {
-                LogError("GridComponent.InitAI", Scrap);
+                LogError("GridComponent.InitAI", scrap);
                 return;
             }
 
             try
             {
-                AI = BotFabric.FabricateBot(Grid, RC);
+                _ai = BotFabrication.FabricateBot(Grid, _remoteControl);
 
-                if (AI == null)
+                if (_ai == null)
                 {
                     DebugWrite("GridComponent.InitAI", "Bot Fabricator yielded null");
                     Shutdown();
                     return;
                 }
 
-                bool init = AI.Init(RC);
+                bool init = _ai.Init(_remoteControl);
 
                 if (init)
                 {
@@ -190,36 +194,37 @@ namespace Cheetah.AI
 
                 //DebugWrite("GridComponent.InitAI", $"AI Operable: {AI.Operable}");
 
-                if (AI.Update != default(MyEntityUpdateEnum)) RC.NeedsUpdate |= AI.Update;
-                RC.OnMarkForClose += (trash) => { Shutdown(); };
-                IsOperable = true;
-                Inited = true;
+                if (_ai.Update != default(MyEntityUpdateEnum)) _remoteControl.NeedsUpdate |= _ai.Update;
+                _remoteControl.OnMarkForClose += (trash) => { Shutdown(); };
+                _isOperable = true;
+                _inited = true;
+                RecompilePBs();
                 //Grid.DebugWrite("InitAI", "Grid Component successfully inited.");
             }
-            catch (Exception Scrap)
+            catch (Exception scrap)
             {
-                LogError("GridComponent.InitAI", Scrap);
+                LogError("GridComponent.InitAI", scrap);
                 Shutdown();
             }
         }
 
-        void TryAssignToFaction(bool RecompilePBs = true)
+        private void TryAssignToFaction()
         {
             try
             {
-                if (!AISessionCore.IsServer) return;
-                if (string.IsNullOrWhiteSpace(RC.CustomData)) return;
+                if (!AiSessionCore.IsServer) return;
+                if (string.IsNullOrWhiteSpace(_remoteControl.CustomData)) return;
 
-                string CustomData = RC.CustomData.Replace("\r\n", "\n");
-                if (!RC.CustomData.Contains("Faction:")) return;
+                string customData = _remoteControl.CustomData.Replace("\r\n", "\n");
+                if (!_remoteControl.CustomData.Contains("Faction:")) return;
 
-                var split = CustomData.Split('\n').Where(x => x.Contains("Faction:")).ToList();
-                if (split.Count() == 0) return;
+                List<string> split = customData.Split('\n').Where(x => x.Contains("Faction:")).ToList();
+                if (!split.Any()) return;
                 string factionLine = split[0].Trim();
                 string[] lineSplit = factionLine.Split(':');
-                if (lineSplit.Count() != 2)
+                if (lineSplit.Length != 2)
                 {
-                    Grid.LogError("TryAssignToFaction", new Exception($"Cannot assign to faction", new Exception($"Line '{factionLine}' cannot be parsed.")));
+                    Grid.LogError("TryAssignToFaction", new Exception("Cannot assign to faction", new Exception($"Line '{factionLine}' cannot be parsed.")));
                     return;
                 }
                 string factionTag = lineSplit[1].Trim();
@@ -227,14 +232,14 @@ namespace Cheetah.AI
                 if (factionTag == "Nobody")
                 {
                     Grid.ChangeOwnershipSmart(0, MyOwnershipShareModeEnum.All);
-                    RecompileDelay.Start();
+                    _recompileDelay.Start();
                     //DebugWrite("TryAssignToFaction", $"Assigned to nobody, recompiled scripts");
                 }
                 else
                 {
-                    IMyFaction Faction = MyAPIGateway.Session.Factions.Factions.Values.FirstOrDefault(x => x.Tag == factionTag);
+                    IMyFaction faction = MyAPIGateway.Session.Factions.Factions.Values.FirstOrDefault(x => x.Tag == factionTag);
 
-                    if (Faction == null)
+                    if (faction == null)
                     {
                         Grid.LogError("TryAssignToFaction", new Exception($"Faction with tag '{factionTag}' was not found!"));
                         return;
@@ -242,30 +247,29 @@ namespace Cheetah.AI
 
                     try
                     {
-                        Grid.ChangeOwnershipSmart(Faction.FounderId, MyOwnershipShareModeEnum.Faction);
-                        RecompileDelay.Start();
+                        Grid.ChangeOwnershipSmart(faction.FounderId, MyOwnershipShareModeEnum.Faction);
                         //DebugWrite("TryAssignToFaction", $"Assigned to faction '{Data[1]}', recompiled scripts");
                     }
-                    catch (Exception Scrap)
+                    catch (Exception scrap)
                     {
-                        LogError("TryAssignToFaction.ChangeGridOwnership", Scrap);
+                        LogError("TryAssignToFaction.ChangeGridOwnership", scrap);
                     }
                 }
             }
-            catch (Exception Scrap)
+            catch (Exception scrap)
             {
-                LogError("TryAssignToFaction.ParseCustomData", Scrap);
+                LogError("TryAssignToFaction.ParseCustomData", scrap);
             }
         }
 
-        public void DebugWrite(string Source, string Message, string DebugPrefix = "RemoteComponent.")
+        private void DebugWrite(string source, string message, string debugPrefix = "RemoteComponent.")
         {
-            Grid.DebugWrite(DebugPrefix + Source, Message);
+            Grid.DebugWrite(debugPrefix + source, message);
         }
 
-        public void LogError(string Source, Exception Scrap, string DebugPrefix = "RemoteComponent.")
+        private void LogError(string source, Exception scrap, string debugPrefix = "RemoteComponent.")
         {
-            Grid.LogError(DebugPrefix + Source, Scrap);
+            Grid.LogError(debugPrefix + source, scrap);
         }
 
         private void Run()
@@ -273,32 +277,32 @@ namespace Cheetah.AI
             try
             {
                 if (CanOperate)
-                    AI.Main();
+                    _ai.Main();
                 else
                     Shutdown();
             }
-            catch (Exception Scrap)
+            catch (Exception scrap)
             {
-                LogError("Run|AI.Main()", Scrap);
+                LogError("Run|AI.Main()", scrap);
             }
         }
 
-        private void Shutdown(bool Notify = true)
+        private void Shutdown(bool notify = true)
         {
-            IsOperable = false;
+            _isOperable = false;
             try
             {
-                if (AI != null && AI.Initialized) AI.Shutdown();
+                if (_ai != null && _ai.Initialized) _ai.Shutdown();
                 //(Grid as MyCubeGrid).Editable = true;
             }
-            catch (Exception Scrap)
+            catch (Exception scrap)
             {
-                LogError("Shutdown", Scrap);
+                LogError("Shutdown", scrap);
             }
-            if (Notify) DebugWrite("Shutdown", "RC component shut down.");
+            if (notify) DebugWrite("Shutdown", "RC component shut down.");
         }
 
-        private MyObjectBuilder_EntityBase _builder = null;
+        private MyObjectBuilder_EntityBase _builder;
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false)
         {
             return copy ? _builder.Clone() as MyObjectBuilder_EntityBase : _builder;

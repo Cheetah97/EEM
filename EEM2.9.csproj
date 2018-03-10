@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{4052FF50-F985-4520-B443-971DC6F130E2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>ClassLibrary</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>EEM2.9.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>EEM2.9.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>EEM2._9</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Sandbox.Common">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Sandbox.Game">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="SpaceEngineers.Game">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="SpaceEngineers.ObjectBuilders">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="VRage">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Game">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Game.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Game.XmlSerializers">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Game.XmlSerializers.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Library">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Library.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Math">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Math.dll</HintPath>
+    </Reference>
+    <Reference Include="VRage.Scripting">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\VRage.Scripting.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AiSessionCore.cs" />
+    <Compile Include="Bot.cs" />
+    <Compile Include="BotBase.cs" />
+    <Compile Include="BotDiplomacyHandler.cs" />
+    <Compile Include="BotFighter.cs" />
+    <Compile Include="BotFreighter.cs" />
+    <Compile Include="BotRadar.cs" />
+    <Compile Include="BotStation.cs" />
+    <Compile Include="BotTypes.cs" />
+    <Compile Include="BuyShip.cs" />
+    <Compile Include="BuyShipMonitor.cs" />
+    <Compile Include="BuyShipSpawnData.cs" />
+    <Compile Include="CleanUpEEM.cs" />
+    <Compile Include="CleanupRemoteControl.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="BotDamageHandler.cs" />
+    <Compile Include="DiplomacyList.cs" />
+    <Compile Include="GridComponent.cs" />
+    <Compile Include="HelperClasses\BotTypeHelper.cs" />
+    <Compile Include="HelperClasses\DamageHelper.cs" />
+    <Compile Include="HelperClasses\DebugHelper.cs" />
+    <Compile Include="HelperClasses\EntityByDistanceSorter.cs" />
+    <Compile Include="HelperClasses\FactionsExtensions.cs" />
+    <Compile Include="HelperClasses\GeneralExtensions.cs" />
+    <Compile Include="HelperClasses\GenericHelpers.cs" />
+    <Compile Include="HelperClasses\GridExtenstions.cs" />
+    <Compile Include="HelperClasses\InventoryHelpers.cs" />
+    <Compile Include="HelperClasses\NumberExtensions.cs" />
+    <Compile Include="HelperClasses\OwnershipTools.cs" />
+    <Compile Include="HelperClasses\StaticTools.cs" />
+    <Compile Include="HelperClasses\TerminalExtensions.cs" />
+    <Compile Include="HelperClasses\VectorExtensions.cs" />
+    <Compile Include="Log.cs" />
+    <Compile Include="LogWriter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include=".vs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\..\..\..\..\..\..\..\Documents\Visual Studio 2015\SEWhitelistChecker2015.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="EEM2.9.ruleset" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+</Project>

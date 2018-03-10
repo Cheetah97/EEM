@@ -1,13 +1,9 @@
-﻿using Sandbox.ModAPI;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Timers;
-using VRage.Game;
+using Sandbox.ModAPI;
 using VRage.Game.ModAPI;
 
-namespace Cheetah.AI
+namespace EEM
 {
     public static class Diplomacy
     {
